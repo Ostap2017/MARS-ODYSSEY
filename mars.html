@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>MARS ODYSSEY: FIXED LIVE NETWORK EDITION</title>
+    <style>
+        body { margin: 0; background: #0c0604; color: #ff5500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; user-select: none; }
+        canvas { display: block; cursor: crosshair; }
+        
+        /* ГОЛОВНЕ МЕНЮ */
+        #main-menu {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #2c1108 0%, #0c0604 100%);
+            z-index: 500; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #menu-logo {
+            font-family: 'Courier New', monospace; font-size: 64px; font-weight: bold;
+            color: #ff4500; text-shadow: 4px 4px 0px #4a1500, 0 0 30px rgba(255, 69, 0, 0.5);
+            margin-bottom: 40px; letter-spacing: 4px; text-align: center;
+        }
+        .menu-input-group {
+            margin-bottom: 25px; text-align: center;
+        }
+        .menu-input-group label {
+            display: block; font-family: 'Courier New', monospace; font-size: 16px; color: #00ffcc; margin-bottom: 8px; font-weight: bold;
+        }
+        #nickname-input {
+            background: #1a0a05; border: 2px solid #ff4500; padding: 12px 20px;
+            color: #fff; font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold;
+            text-align: center; width: 280px; border-radius: 4px; outline: none; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        #nickname-input:focus { border-color: #00ffcc; box-shadow: inset 0 0 10px rgba(0,255,200,0.3), 0 0 10px rgba(0,255,200,0.2); }
+        
+        /* МІНЄКРАФТ СТИЛЬ КНОПОК */
+        .btn-minecraft {
+            background: #4a5c3a; color: #e0e0e0; font-family: 'Courier New', monospace;
+            font-size: 20px; font-weight: bold; border: 3px solid #2e3b24; padding: 12px 30px;
+            cursor: pointer; box-shadow: 0 4px 0 #1f2818, inset 0 2px 0 rgba(255,255,255,0.2);
+            text-shadow: 2px 2px 0px #222; min-width: 280px; text-align: center;
+            transition: background 0.1s; margin: 10px 0; display: block;
+        }
+        .btn-minecraft:hover { background: #5c7348; color: #fff; border-color: #3b4c2e; box-shadow: 0 4px 0 #25321b, inset 0 2px 0 rgba(255,255,255,0.3); }
+        .btn-minecraft:active { transform: translateY(4px); box-shadow: none; }
+        
+        .btn-secondary { background: #3a4a5c; border-color: #242e3b; box-shadow: 0 4px 0 #181f28, inset 0 2px 0 rgba(255,255,255,0.2); }
+        .btn-secondary:hover { background: #485c73; border-color: #2e3b4c; box-shadow: 0 4px 0 #1b2532, inset 0 2px 0 rgba(255,255,255,0.3); }
+        .btn-purple { background: #5c3a5b; border-color: #3b243a; box-shadow: 0 4px 0 #281827, inset 0 2px 0 rgba(255,255,255,0.2); }
+        .btn-purple:hover { background: #734871; border-color: #4c2e4b; box-shadow: 0 4px 0 #321b31, inset 0 2px 0 rgba(255,255,255,0.3); }
+        .btn-danger { background: #7a2a1e; border-color: #4f1b13; box-shadow: 0 4px 0 #33110c, inset 0 2px 0 rgba(255,255,255,0.2); }
+        .btn-danger:hover { background: #963526; border-color: #612218; box-shadow: 0 4px 0 #421610, inset 0 2px 0 rgba(255,255,255,0.3); }
+
+        /* ВІКНО ВИБОРУ СКЛАДНОСТІ */
+        #difficulty-window {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(15, 8, 5, 0.98); border: 3px solid #ff5500; border-radius: 10px;
+            padding: 30px; width: 420px; box-shadow: 0 0 40px rgba(255, 69, 0, 0.5);
+            display: none; z-index: 550; color: #fff; text-align: center;
+        }
+        .diff-desc { font-family: 'Courier New', monospace; font-size: 13px; color: #aaa; margin-top: -5px; margin-bottom: 15px; text-align: left; background: rgba(0,0,0,0.3); padding: 8px; border-left: 3px solid #ff5500; }
+
+        /* ВІКНО МУЛЬТИПЛЕЄРА */
+        #multiplayer-window {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(10, 7, 15, 0.98); border: 3px solid #a133ff; border-radius: 12px;
+            padding: 25px; width: 550px; box-shadow: 0 0 40px rgba(161, 51, 255, 0.4);
+            display: none; z-index: 580; color: #fff;
+        }
+        #multiplayer-window h2 { margin-top: 0; color: #a133ff; text-align: center; font-family: 'Courier New', monospace; border-bottom: 2px solid #a133ff; padding-bottom: 10px; }
+        #lobby-list-container { max-height: 300px; overflow-y: auto; margin-bottom: 15px; }
+        .lobby-slot { background: rgba(161, 51, 255, 0.05); border: 2px solid #441a66; padding: 15px; border-radius: 8px; margin: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .lobby-info { font-family: 'Courier New', monospace; font-size: 14px; }
+        .btn-join { min-width: 110px; padding: 8px 15px; font-size: 16px; background: #a133ff; border-color: #661f99; box-shadow: 0 4px 0 #441466; margin: 0; }
+        .btn-join:hover { background: #b55aff; border-color: #7a26b8; box-shadow: 0 4px 0 #551980; }
+        .no-servers { text-align: center; font-family: 'Courier New', monospace; color: #888; padding: 30px 10px; }
+
+        /* ВІКНО ЗБЕРЕЖЕНИХ СВІТІВ */
+        #saves-window {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(15, 8, 5, 0.95); border: 3px solid #ff5500; border-radius: 10px;
+            padding: 25px; width: 520px; box-shadow: 0 0 30px rgba(255, 69, 0, 0.4);
+            display: none; z-index: 600; color: #fff;
+        }
+        #saves-window h2 { margin-top: 0; color: #ff5500; text-align: center; font-family: 'Courier New', monospace; border-bottom: 2px solid #ff5500; padding-bottom: 10px; }
+        #save-slots-container { max-height: 380px; overflow-y: auto; }
+        .save-slot { background: rgba(255,255,255,0.05); border: 2px dashed #552211; padding: 15px; border-radius: 6px; margin: 15px 0; position: relative; }
+        .save-slot.active { border: 2px solid #00ffcc; }
+        .save-header-row { display: flex; justify-content: space-between; align-items: center; }
+        .save-title { font-size: 18px; font-weight: bold; color: #00ffcc; font-family: 'Courier New', monospace; }
+        .save-actions { display: flex; gap: 8px; }
+        .action-icon-btn { background: #22110c; border: 1px solid #ff5500; color: #ff5500; cursor: pointer; width: 28px; height: 28px; border-radius: 4px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .action-icon-btn:hover { background: #4a1500; color: #fff; border-color: #fff; }
+        .save-info { font-size: 13px; color: #ccc; line-height: 1.5; font-family: 'Courier New', monospace; margin-top: 5px; }
+        
+        /* ЧАТ СТИЛЮ MINECRAFT */
+        #game-chat-container {
+            position: absolute; bottom: 180px; left: 15px; width: 440px;
+            background: rgba(10, 5, 3, 0.75); border: 2px solid rgba(255, 69, 0, 0.3);
+            border-radius: 6px; display: flex; flex-direction: column;
+            z-index: 400; font-family: 'Courier New', monospace; overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: auto;
+        }
+        #game-chat-container.active { background: rgba(10, 5, 3, 0.95); border-color: #ff5500; }
+        #chat-messages-box { height: 220px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #fff; }
+        .chat-line { line-height: 1.4; word-break: break-all; text-shadow: 1px 1px 2px #000; }
+        #chat-commands-hint { background: #1a0d08; border-top: 1px solid rgba(255, 85, 0, 0.2); padding: 8px 10px; font-size: 11px; color: #00ffcc; display: none; }
+        #chat-input-field { background: #000; border: none; border-top: 2px solid rgba(255, 69, 0, 0.4); padding: 10px; color: #fff; font-family: 'Courier New', monospace; font-size: 14px; outline: none; display: none; width: 100%; box-sizing: border-box; }
+
+        /* ХУД ПАНЕЛІ */
+        .hud-panel { position: absolute; padding: 15px; background: rgba(15, 6, 4, 0.85); border: 2px solid #ff4500; border-radius: 6px; pointer-events: none; }
+        .stats { top: 15px; left: 15px; min-width: 210px; }
+        .inventory { top: 15px; right: 15px; min-width: 180px; text-align: right; border-color: #00f2ff; color: #00f2ff; }
+        .log-box { bottom: 15px; left: 15px; font-family: 'Courier New', monospace; font-size: 12px; color: #15f4ee; max-width: 400px; min-width: 300px; height: 95px; }
+        
+        .game-header-panel {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 6, 4, 0.85); padding: 10px 25px; border: 2px solid #00ffcc; border-radius: 6px; pointer-events: none; text-align: center; min-width: 180px;
+        }
+        .game-timer { font-family: 'Courier New', monospace; font-size: 24px; font-weight: bold; color: #00ffcc; }
+        .game-level { font-family: 'Courier New', monospace; font-size: 14px; font-weight: bold; color: #ffaa00; margin-top: 3px; }
+        .game-kills { font-family: 'Courier New', monospace; font-size: 14px; color: #ff3333; font-weight: bold; margin-top: 2px; }
+        
+        #level-alert {
+            position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
+            font-family: 'Courier New', monospace; font-size: 32px; font-weight: bold;
+            color: #ffcc00; text-shadow: 0 0 20px #ff4500; text-align: center;
+            pointer-events: none; display: none; z-index: 50; background: rgba(0,0,0,0.6); padding: 15px 30px; border-radius: 8px; border: 1px solid #ffcc00;
+        }
+        #level-alert.final-level { color: #ff3333 !important; border-color: #ff3333 !important; text-shadow: 0 0 25px #ff0000 !important; }
+        
+        .bar { width: 100%; height: 8px; background: #331100; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; background: #ff4500; width: 100%; }
+        .xp-fill { background: #00ff66; width: 0%; }
+        
+        /* МАГАЗИН */
+        #shop-window { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(10, 20, 30, 0.95); border: 3px solid #00ffcc; border-radius: 12px; padding: 25px; min-width: 420px; display: none; z-index: 100; color: #fff;
+        }
+        .shop-item { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
+        .shop-btn { background: #00ffcc; color: #000; border: none; padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .shop-btn:hover { background: #fff; box-shadow: 0 0 10px #00ffcc; }
+        .close-shop { background: #ff4500; color: white; border: none; padding: 5px 10px; float: right; cursor: pointer; border-radius: 4px; }
+        
+        /* ВІКНО КАРТИ МАРСУ */
+        #map-window {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(20, 8, 4, 0.96); border: 3px solid #ff4500; border-radius: 10px;
+            padding: 20px; width: 440px; box-shadow: 0 0 35px rgba(255, 69, 0, 0.6);
+            display: none; z-index: 150; color: #fff; text-align: center; font-family: 'Courier New', monospace;
+        }
+        #map-canvas-container {
+            background: #090302; border: 2px solid #551a08; border-radius: 6px;
+            margin: 15px auto; width: 400px; height: 400px; position: relative; overflow: hidden;
+        }
+        #map-canvas { display: block; background: radial-gradient(circle, #240e06 0%, #090302 100%); }
+        .map-legend { display: flex; justify-content: center; gap: 15px; font-size: 12px; margin-top: 10px; color: #ccc; }
+
+        /* МЕНЮ ПАУЗИ */
+        #pause-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 6, 4, 0.8); display: none; z-index: 200; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(4px); }
+        #debug-overlay { position: absolute; top: 10px; left: 10px; font-family: 'Courier New', monospace; font-size: 13px; color: #ffffff; background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 4px; z-index: 600; display: none; pointer-events: none; }
+        #victory-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(6, 20, 15, 0.9); display: none; z-index: 300; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(8px); }
+        
+        /* ЕКРАН ВИХОДУ */
+        #shutdown-screen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 9999; display: none; 
+            justify-content: center; align-items: center; flex-direction: column; 
+            color: #ff3333; font-family: 'Courier New', monospace; text-align: center;
+        }
+        .hint { text-align: center; color: #888; font-size: 11px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div id="debug-overlay">
+    <div>Mars Odyssey Beta 1.4 (Storage Event Build)</div>
+    <div id="debug-fps">FPS: 0</div>
+    <div id="debug-difficulty">Difficulty: normal</div>
+    <div id="debug-mp-status">Mode: Singleplayer</div>
+    <br>
+    <div id="debug-cpu">CPU: Detect...</div>
+    <div id="debug-gpu">GPU: Detect...</div>
+    <div id="debug-coords">XYZ: 0.000 / 0.000</div>
+    <div id="debug-entities">E: 0</div>
+</div>
+
+<!-- ГОЛОВНЕ МЕНЮ -->
+<div id="main-menu">
+    <div id="menu-logo">MARS ODYSSEY</div>
+    <div class="menu-input-group">
+        <label for="nickname-input">ПОЗИВНИЙ ПІЛОТА:</label>
+        <input type="text" id="nickname-input" placeholder="ВВЕДИ СВОЄ ІМ'Я" maxlength="18">
+    </div>
+    <button class="btn-minecraft" onclick="openDifficultyMenu()">ОДИНАРНА ГРА</button>
+    <button class="btn-minecraft btn-purple" onclick="openMultiplayerMenu()">ГРАТИ В МУЛЬТИПЛЕЄР</button>
+    <button class="btn-minecraft btn-secondary" onclick="toggleSavesWindow(true)">ЗБЕРЕЖЕНІ СВІТИ</button>
+    <button class="btn-minecraft btn-danger" onclick="shutdownGame()">ВИЙТИ З ГРИ</button>
+</div>
+
+<!-- ВІКНО ВИБОРУ СКЛАДНОСТІ -->
+<div id="difficulty-window">
+    <h2 style="color:#00ffcc; font-family:'Courier New'; border-bottom:2px solid #00ffcc; padding-bottom:10px;">ВИБІР СКЛАДНОСТІ</h2>
+    <div style="margin-bottom: 15px;">
+        <button class="btn-minecraft" style="background:#2a4d2a; border-color:#172e17;" onclick="selectDifficulty('easy')">ЛЕГКИЙ</button>
+        <div class="diff-desc">Інопланетяни: 20 HP. Бос: 50 000 HP. Винагорода: +10 кр.</div>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <button class="btn-minecraft" style="background:#4d412a; border-color:#2e2617;" onclick="selectDifficulty('normal')">НОРМАЛЬНИЙ</button>
+        <div class="diff-desc">Інопланетяни: 40 HP. Бос: 75 000 HP. Винагорода: +15 кр.</div>
+    </div>
+    <div style="margin-bottom: 25px;">
+        <button class="btn-minecraft" style="background:#4d2a2a; border-color:#2e1717;" onclick="selectDifficulty('hard')">ВАЖКИЙ</button>
+        <div class="diff-desc">Інопланетяни: 60 HP. Бос: 125 000 HP! Винагорода: +40 кр.</div>
+    </div>
+    <button class="btn-minecraft btn-danger" style="min-width:100px; font-size:14px; padding:6px 15px;" onclick="closeDifficultyMenu()">НАЗАД</button>
+</div>
+
+<!-- ВІКНО МУЛЬТИПЛЕЄРА -->
+<div id="multiplayer-window">
+    <button class="close-shop" onclick="closeMultiplayerMenu()">X</button>
+    <h2>ГЛОБАЛЬНІ СВІТИ МАРСА</h2>
+    <p style="font-size:12px; color:#aaa; text-align:center; margin-top:-5px; font-family:'Courier New';">Світи відображаються тільки тоді, коли в них ХТОСЬ ГРАЄ прямо зараз.</p>
+    
+    <div id="lobby-list-container"></div>
+    <div class="hint">Кожен підключений гість починає з нульовими кристалами та ресурсами!</div>
+</div>
+
+<!-- ВІКНО ЗБЕРЕЖЕНИХ СВІТІВ -->
+<div id="saves-window">
+    <button class="close-shop" onclick="toggleSavesWindow(false)">X</button>
+    <h2>ЗБЕРЕЖЕНІ МІСІЇ</h2>
+    <div id="save-slots-container"></div>
+    <div class="hint" style="margin-top:20px;">Дані зберігаються локально у твоєму браузері</div>
+</div>
+
+<!-- ВІКНО КАРТИ МАРСУ -->
+<div id="map-window">
+    <button class="close-shop" onclick="toggleMapWindow(false)">X</button>
+    <h2 style="color:#ff5500; margin:0; font-size:20px;">🗺️ НАВІГАЦІЙНА КАРТА</h2>
+    <div id="map-canvas-container">
+        <canvas id="map-canvas" width="400" height="400"></canvas>
+    </div>
+    <div class="map-legend">
+        <div><span style="color:#00ff66;">🟢</span> Ви</div>
+        <div><span style="color:#00ffff;">🔵</span> Магазин</div>
+        <div><span style="color:#ff3333;">🔴</span> Вороги</div>
+    </div>
+    <div class="hint" style="margin-top:10px;">Натисни [M] знову, щоб закрити</div>
+</div>
+
+<!-- МЕНЮ ПАУЗИ -->
+<div id="pause-overlay">
+    <h1 style="font-family: 'Courier New'; font-size: 48px; margin: 0 0 10px 0; text-shadow: 0 0 20px #ff4500;">ГРУ ЗУПИНЕНО</h1>
+    <button class="btn-minecraft" onclick="togglePause()">ПРОДОВЖИТИ</button>
+    <button class="btn-minecraft btn-secondary" onclick="saveAndExitGame()">ЗБЕРЕГТИ І ВИЙТИ</button>
+    <button class="btn-minecraft btn-danger" onclick="exitToMenu()">ВИЙТИ БЕЗ ЗБЕРЕЖЕННЯ</button>
+</div>
+
+<div id="level-alert"></div>
+
+<!-- ВІКНО ПЕРЕМОГИ -->
+<div id="victory-overlay">
+    <h1 style="font-family:'Courier New'; font-size:56px; color:#00ffcc; text-shadow:0 0 30px rgba(0,255,200,0.6);">ГРУ ПРОЙДЕНО!</h1>
+    <button class="btn-minecraft" style="background:#00ffcc; color:#000;" onclick="window.location.reload()">ПОЧАТИ ЗНОВУ</button>
+</div>
+
+<!-- ЕКРАН ПОВНОГО ВИХОДУ (SHUTDOWN) -->
+<div id="shutdown-screen">
+    <h1 style="font-size: 44px; text-shadow: 0 0 20px #ff0000; margin-bottom: 10px;">🔴 СИСТЕМУ ВИМКНЕНО</h1>
+    <p style="color: #888; font-size: 16px;">Сесію зв'язку закрито. Вкладку можна закрити.</p>
+</div>
+
+<!-- ІГРОВИЙ ЧАТ -->
+<div id="game-chat-container">
+    <div id="chat-messages-box">
+        <div class="chat-line" style="color: #ffaa00;">[Система] Чат активовано. Натисни "T" для вводу команд. Напиши /tips для підказок кнопок.</div>
+    </div>
+    <div id="chat-commands-hint">
+        <div style="color: #ff5500; font-weight: bold; margin-bottom: 4px;">Доступні команди чату:</div>
+        <div class="hint-cmd-item"><span style="color:#00ff66;">/tips</span>, <span style="color:#00ff66;">/help</span>, <span style="color:#00ff66;">/clear</span>, <span style="color:#00ff66;">/give_iron</span>, <span style="color:#00ff66;">/give_credits</span>, <span style="color:#00ff66;">/god</span></div>
+    </div>
+    <input type="text" id="chat-input-field" placeholder="Введіть повідомлення або команду..." maxlength="100">
+</div>
+
+<!-- ХУД ІНТЕРФЕЙСУ ГРИ -->
+<div class="game-header-panel">
+    <div class="game-timer" id="game-timer">00:00</div>
+    <div class="game-level" id="game-level">ЕТАП МІСІЇ: 1 / 15</div>
+    <div class="game-kills" id="game-kills">ЗАЧИСТКА ВОРОГІВ: 0 / 50</div>
+</div>
+
+<div class="hud-panel stats">
+    <div style="font-weight: bold; letter-spacing: 1px;">МАРСОХІД: <span id="pilot-name">ЗАВАНТАЖЕННЯ...</span> <span id="mp-tag"></span></div>
+    <div style="margin-top: 10px;">МІЦНІСТЬ КОРПУСУ: <span id="hp-txt">100 / 100</span> HP</div>
+    <div class="bar"><div id="hp-bar" class="bar-fill"></div></div>
+    <div style="margin-top: 5px; font-size: 12px; color: #ffaa00;">💥 ШКОДА ГАРМАТИ: <span id="dmg-txt">10</span></div>
+    <div style="margin-top: 10px;">РІВЕНЬ ТАНКА: <span id="lvl-txt">1</span></div>
+    <div class="bar"><div id="xp-bar" class="bar-fill xp-fill"></div></div>
+</div>
+
+<div class="hud-panel inventory">
+    <div style="font-weight: bold; color: #00f2ff;">БОРТОВЕ СХОВИЩЕ</div>
+    <div style="margin-top: 8px;">⚙️ ЗАЛІЗНА РУДА: <span id="iron-txt">0</span></div>
+    <div>💎 КРИСТАЛИ: <span id="crystal-txt">0</span></div>
+    <div style="color: #ff9900; font-weight: bold; margin-top: 5px;">💰 КРЕДИТИ: <span id="credits-txt">0</span></div>
+</div>
+
+<div class="hud-panel log-box" id="log-box">
+    > Ініціалізація квантового зв'язку...<br>> Очікування авторизації пілота.
+</div>
+
+<!-- ТЕРМІНАЛ МАГАЗИНУ -->
+<div id="shop-window">
+    <button class="close-shop" onclick="toggleShop()">X</button>
+    <h2 style="color:#00ffcc; border-bottom:2px solid #00ffcc; text-align:center; font-family:'Courier New'; padding-bottom:5px;">INTERPLANETARY EXCHANGE</h2>
+    <div class="shop-item"><div><strong>🛠️ Продати Залізо (all)</strong><br><span style="font-size:12px; color:#aaa;">Курс: 1 руда = 2 кр.</span></div><button class="shop-btn" onclick="sellResource('iron', 2)">ПРОДАТИ</button></div>
+    <div class="shop-item"><div><strong>💎 Продати Кристали (all)</strong><br><span style="font-size:12px; color:#aaa;">Курс: 1 кристал = 5 кр.</span></div><button class="shop-btn" onclick="sellResource('crystal', 5)">ПРОДАТИ</button></div>
+    <div class="shop-item"><div><strong>🔧 Ремонт Обшивки (+30 HP)</strong><br><span style="font-size:12px; color:#ff9900;">Ціна: 40 Кр</span></div><button class="shop-btn" onclick="buyUpgrade('repair', 40)">КУПИТИ</button></div>
+    <div class="shop-item"><div><strong>🚀 Потужний Двигун (+Speed)</strong><br><span style="font-size:12px; color:#ff9900;">Ціна: 100 Кр</span></div><button class="shop-btn" onclick="buyUpgrade('speed', 100)">КУПИТИ</button></div>
+    <div class="shop-item"><div><strong>🛡️ Важка Броня (+50 Max HP)</strong><br><span style="font-size:12px; color:#ffaa00;">Ціна: 150 Кр</span></div><button class="shop-btn" onclick="buyUpgrade('armor', 150)">КУПИТИ</button></div>
+    <div class="shop-item"><div><strong>⚔️ Калібр Гармати (+5 Дамаг)</strong><br><span style="font-size:12px; color:#ffaa00;">Ціна: 120 Кр</span></div><button class="shop-btn" onclick="buyUpgrade('damage', 120)">КУПИТИ</button></div>
+</div>
+
+<canvas id="marsCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('marsCanvas');
+const ctx = canvas.getContext('2d');
+
+const mapCanvas = document.getElementById('map-canvas');
+const mapCtx = mapCanvas.getContext('2d');
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+resize();
+
+function detectHardware() {
+    let hardware = { cpu: "Unknown CPU", gpu: "Unknown GPU" };
+    if (navigator.hardwareConcurrency) hardware.cpu = `${navigator.hardwareConcurrency}-Thread CPU`;
+    try {
+        const glCanvas = document.createElement('canvas');
+        const gl = glCanvas.getContext('webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) hardware.gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).replace(/ANGLE \((.*)\)/, '$1');
+        }
+    } catch (e) {}
+    return hardware;
+}
+const detectedPC = detectHardware();
+
+const game = {
+    player: { x: 0, y: 0, hp: 100, maxHp: 100, damage: 10, xp: 0, lvl: 1, nextLvlXp: 100, speed: 4, size: 22, iron: 0, crystal: 0, credits: 0, shootCooldown: 0, shootMaxCooldown: 30 },
+    camera: { x: 0, y: 0 }, keys: {}, mouse: { x: 0, y: 0, isDown: false },
+    entities: [], projectiles: [], particles: [], shopBase: { x: 150, y: 150, size: 80 }, worldBounds: 5000,
+    isPaused: true, isMenuOpen: true, isGameOver: false, showDebug: false, isShutdown: false,
+    timeElapsed: 0, fpsCounter: 0, currentFps: 0, lastFpsUpdate: 0,
+    gameLevel: 1, levelKills: 0, killsTarget: 50, bossSpawned: false, pilotName: "Гравець",
+    currentLoadedWorldId: null, difficulty: 'normal',
+    isMultiplayer: false, isHost: true, mySessionToken: 'session_' + Math.random().toString(36).substr(2, 9),
+    isGodMode: false, isChatOpen: false, isMapOpen: false,
+    // ПРАПОРЦІ ОДНОРАЗОВОГО ВИКОРИСТАННЯ ЧІТІВ ЗА РАУНД
+    usedCheatIron: false, usedCheatCredits: false
+};
+
+document.getElementById('debug-cpu').innerText = `CPU: ${detectedPC.cpu}`;
+document.getElementById('debug-gpu').innerText = `GPU: ${detectedPC.gpu}`;
+
+// СЕКУНДНИЙ ТАЙМЕР
+setInterval(() => {
+    if (!game.isPaused && !game.isGameOver && !game.isMenuOpen && !game.isShutdown) {
+        game.timeElapsed++;
+        document.getElementById('game-timer').innerText = formatTime(game.timeElapsed);
+    }
+}, 1000);
+
+function resetGameState() {
+    game.player = { x: 0, y: 0, hp: 100, maxHp: 100, damage: 10, xp: 0, lvl: 1, nextLvlXp: 100, speed: 4, size: 22, iron: 0, crystal: 0, credits: 0, shootCooldown: 0, shootMaxCooldown: 30 },
+    game.entities = []; game.projectiles = []; game.particles = [];
+    game.timeElapsed = 0; game.gameLevel = 1; game.levelKills = 0;
+    game.bossSpawned = false; game.isGameOver = false; game.isGodMode = false; game.keys = {}; game.mouse.isDown = false;
+    game.currentLoadedWorldId = null; game.isMapOpen = false;
+    // Скидання використання чітів для нового раунду
+    game.usedCheatIron = false; game.usedCheatCredits = false;
+    document.getElementById('map-window').style.display = 'none';
+    updateHUDValues();
+}
+
+function updateHUDValues() {
+    document.getElementById('game-timer').innerText = formatTime(game.timeElapsed);
+    document.getElementById('game-level').innerText = `ЕТАП МІСІЇ: ${game.gameLevel} / 15`;
+    document.getElementById('game-kills').innerText = game.gameLevel === 15 ? `ФІНАЛЬНА БИТВА!` : `ЗАЧИСТКА ВОРОГІВ: ${game.levelKills} / ${game.killsTarget}`;
+    document.getElementById('pilot-name').innerText = game.pilotName.toUpperCase();
+}
+
+function formatTime(t) { let m = Math.floor(t / 60); let s = t % 60; return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`; }
+
+function openDifficultyMenu() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('difficulty-window').style.display = 'block'; }
+function closeDifficultyMenu() { document.getElementById('difficulty-window').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
+
+// МУЛЬТИПЛЕЄРНА ЛОГІКА
+function openMultiplayerMenu() {
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('multiplayer-window').style.display = 'block';
+    updateLiveServersList();
+}
+function closeMultiplayerMenu() { document.getElementById('multiplayer-window').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
+
+function updateLiveServersList() {
+    const container = document.getElementById('lobby-list-container');
+    const now = Date.now();
+    let count = 0; let html = "";
+
+    for (let i = 0; i < localStorage.length; i++) {
+        let key = localStorage.key(i);
+        if (key.startsWith('mars_live_session_')) {
+            try {
+                let session = JSON.parse(localStorage.getItem(key));
+                if (now - session.lastActive < 4000) {
+                    count++;
+                    let clr = session.difficulty === 'easy' ? '#00ff66' : session.difficulty === 'hard' ? '#ff3333' : '#ffcc00';
+                    html += `
+                        <div class="lobby-slot">
+                            <div class="lobby-info">
+                                <span style="color:#00ffcc; font-weight:bold; font-size:16px;">🚀 Світ ${session.pilotName}</span><br>
+                                <span style="color:${clr}">Складність: ${session.difficulty.toUpperCase()}</span> | Етап: ${session.gameLevel}
+                            </div>
+                            <button class="btn-minecraft btn-join" onclick="connectAsGuest('${session.pilotName}', '${session.difficulty}', ${session.gameLevel})">ГРАТИ</button>
+                        </div>`;
+                } else {
+                    localStorage.removeItem(key);
+                }
+            } catch (e) {}
+        }
+    }
+    container.innerHTML = count === 0 ? `<div class="no-servers">Не знадено активних місій.<br><span style="font-size:12px; color:#666;">Відкрий гру у сусідній вкладці та увійди в світ!</span></div>` : html;
+}
+
+window.addEventListener('storage', (e) => {
+    if (document.getElementById('multiplayer-window').style.display === 'block') {
+        updateLiveServersList();
+    }
+});
+
+function broadcastMyHostStatus() {
+    if (!game.isPaused && !game.isMenuOpen && !game.isGameOver && game.isHost) {
+        localStorage.setItem('mars_live_session_' + game.mySessionToken, JSON.stringify({
+            token: game.mySessionToken, pilotName: game.pilotName, difficulty: game.difficulty, gameLevel: game.gameLevel, lastActive: Date.now()
+        }));
+    }
+}
+setInterval(broadcastMyHostStatus, 1500);
+
+function removeMyHostStatus() { localStorage.removeItem('mars_live_session_' + game.mySessionToken); }
+window.addEventListener('beforeunload', removeMyHostStatus);
+
+function selectDifficulty(mode) {
+    game.difficulty = mode; game.isMultiplayer = false; game.isHost = true;
+    document.getElementById('debug-difficulty').innerText = `Difficulty: ${mode}`;
+    document.getElementById('debug-mp-status').innerText = `Mode: Singleplayer`;
+    document.getElementById('mp-tag').innerText = "";
+    document.getElementById('difficulty-window').style.display = 'none';
+    startGame();
+}
+
+function connectAsGuest(hostName, mode, currentStage) {
+    resetGameState();
+    let inp = document.getElementById('nickname-input').value;
+    game.pilotName = (inp && inp.trim() !== "") ? inp : "Військовий";
+    game.difficulty = mode; game.isMultiplayer = true; game.isHost = false;
+    
+    game.player.iron = 0; game.player.crystal = 0; game.player.credits = 0; game.player.lvl = 1; game.player.xp = 0;
+    game.gameLevel = currentStage;
+
+    document.getElementById('debug-difficulty').innerText = `Difficulty: ${mode}`;
+    document.getElementById('debug-mp-status').innerText = `Mode: Connected to ${hostName}`;
+    
+    const tag = document.getElementById('mp-tag');
+    tag.innerText = " (GUEST)"; tag.style.color = "#a133ff";
+
+    document.getElementById('multiplayer-window').style.display = 'none';
+    document.getElementById('main-menu').style.display = 'none';
+    game.isMenuOpen = false; game.isPaused = false; game.lastFpsUpdate = performance.now();
+    
+    spawnWorld();
+    updateHUDValues();
+    appendChatMessage("Система", `З'єднано з місією [Світ ${hostName}]!`, "#00ffcc");
+}
+
+function startGame() {
+    resetGameState();
+    let inp = document.getElementById('nickname-input').value;
+    game.pilotName = (inp && inp.trim() !== "") ? inp : "Остап";
+    document.getElementById('pilot-name').innerText = game.pilotName.toUpperCase();
+    document.getElementById('main-menu').style.display = 'none';
+    game.isMenuOpen = false; game.isPaused = false; game.lastFpsUpdate = performance.now();
+    spawnWorld();
+    appendChatMessage("Система", `Місію розпочато. Позивний: ${game.pilotName}`, "#ffaa00");
+}
+
+/* ФУНКЦІЯ ПОВНОГО ВИХОДУ З САЙТУ */
+function shutdownGame() { 
+    if (confirm("Ви дійсно хочете повністю вийти з гри та закрити вкладку?")) { 
+        removeMyHostStatus(); 
+        game.isShutdown = true; 
+        document.getElementById('main-menu').style.display = 'none'; 
+        document.getElementById('shutdown-screen').style.display = 'flex'; 
+        
+        setTimeout(() => {
+            window.close();
+        }, 300);
+    } 
+}
+
+// ЧАТ
+const chatContainer = document.getElementById('game-chat-container');
+const chatMessagesBox = document.getElementById('chat-messages-box');
+const chatInput = document.getElementById('chat-input-field');
+const chatHintPanel = document.getElementById('chat-commands-hint');
+
+function openGameChat() { if(game.isPaused || game.isGameOver || game.isMenuOpen || game.isMapOpen) return; game.isChatOpen = true; chatContainer.classList.add('active'); chatInput.style.display = 'block'; chatHintPanel.style.display = 'block'; chatInput.focus(); game.mouse.isDown = false; }
+function closeGameChat() { game.isChatOpen = false; chatContainer.classList.remove('active'); chatInput.style.display = 'none'; chatHintPanel.style.display = 'none'; chatInput.value = ""; canvas.focus(); }
+function appendChatMessage(author, text, color = "#ffffff") { const el = document.createElement('div'); el.className = "chat-line"; el.style.color = color; el.innerHTML = `<strong>[${author}]:</strong> ${text}`; chatMessagesBox.appendChild(el); chatMessagesBox.scrollTop = chatMessagesBox.scrollHeight; }
+
+chatInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') {
+        const msg = chatInput.value.trim();
+        if(msg !== "") {
+            if(msg.startsWith("/")) {
+                if(msg === "/tips") {
+                    appendChatMessage("Гайд", "--- УПРАВЛІННЯ МАРСОХОДОМ ---", "#ffcc00");
+                    appendChatMessage("Гайд", "[W, A, S, D] або [Ц, Ф, І, В] — Рух марсохода", "#fff");
+                    appendChatMessage("Гайд", "[ЛКМ (Мишка)] — Стріляти в напрямку курсора", "#fff");
+                    appendChatMessage("Гайд", "[M] або [Ь] — Відкрити/Закрити мапу в реальному часі", "#00ff66");
+                    appendChatMessage("Гайд", "[P] або [З] — Відкрити/Закрити торговий термінал магазину", "#00ffff");
+                    appendChatMessage("Гайд", "[T] або [Е] — Відкрити ігровий чат команд", "#ffaa00");
+                    appendChatMessage("Гайд", "[F3] — Показати дебаг-панель (FPS, Координати)", "#ccc");
+                    appendChatMessage("Гайд", "[ESC] — Поставити гру на паузу / закрити вікна", "#ff3333");
+                }
+                else if(msg === "/give_iron") { 
+                    if (!game.usedCheatIron) {
+                        game.player.iron += 500; 
+                        game.usedCheatIron = true;
+                        appendChatMessage("Чіт", "+500 заліза!", "#00ff66"); 
+                    } else {
+                        appendChatMessage("Система", "Цей чіт вже було використано в цьому раунді!", "#ff3333");
+                    }
+                }
+                else if(msg === "/give_credits") { 
+                    if (!game.usedCheatCredits) {
+                        game.player.credits += 1000; 
+                        game.usedCheatCredits = true;
+                        appendChatMessage("Чіт", "+1000 кредитів!", "#00ff66"); 
+                    } else {
+                        appendChatMessage("Система", "Цей чіт вже було використано в цьому раунді!", "#ff3333");
+                    }
+                }
+                else if(msg === "/god") { game.isGodMode = !game.isGodMode; appendChatMessage("Чіт", `Безсмертя: ${game.isGodMode}`, "#ff3333"); }
+                else if(msg === "/clear") { chatMessagesBox.innerHTML = ""; }
+                else if(msg === "/help") { appendChatMessage("Система", "Доступні команди: /tips, /clear, /give_iron, /give_credits, /god", "#00ffcc"); }
+                else { appendChatMessage("Система", "Невідома команда. Напиши /help або /tips", "#ff3333"); }
+            } else {
+                appendChatMessage(game.pilotName, msg, game.isHost ? "#00ffcc" : "#b55aff");
+            }
+        }
+        closeGameChat();
+    }
+});
+
+// СИСТЕМА ЗБЕРЕЖЕННЯ І ЗАВАНТАЖЕННЯ
+function getWorldsList() { 
+    try { const list = localStorage.getItem('mars_worlds_index'); return list ? JSON.parse(list) : []; } catch(e) { return []; }
+}
+
+function toggleSavesWindow(show) { 
+    document.getElementById('saves-window').style.display = show ? 'block' : 'none'; 
+    if(show) renderSaveSlots(); 
+}
+
+function saveAndExitGame() {
+    if(!game.isHost) { alert("Зберігати світ може лише Хост."); exitToMenu(); return; }
+    let worlds = getWorldsList(); let id = game.currentLoadedWorldId;
+    if (!id) { id = 'mars_world_' + Date.now(); game.currentLoadedWorldId = id; }
+    let idx = worlds.findIndex(w => w.id === id);
+    let worldNumber = idx > -1 ? worlds[idx].number : (worlds.length + 1);
+    let saveDateStr = new Date().toLocaleString('uk-UA');
+    
+    const saveData = { 
+        id, number: worldNumber, pilotName: game.pilotName, gameLevel: game.gameLevel, levelKills: game.levelKills, timeElapsed: game.timeElapsed, difficulty: game.difficulty, 
+        playerStats: { hp: game.player.hp, maxHp: game.player.maxHp, damage: game.player.damage, xp: game.player.xp, lvl: game.player.lvl, speed: game.player.speed, iron: game.player.iron, crystal: game.player.crystal, credits: game.player.credits }, 
+        saveDate: saveDateStr 
+    };
+    if(idx > -1) worlds[idx] = { id, number: worldNumber, pilotName: game.pilotName, date: saveDateStr }; 
+    else worlds.push({ id, number: worldNumber, pilotName: game.pilotName, date: saveDateStr }); 
+    
+    localStorage.setItem('mars_worlds_index', JSON.stringify(worlds)); 
+    localStorage.setItem(id, JSON.stringify(saveData));
+    alert("Місію успішно збережено!"); exitToMenu();
+}
+
+function renderSaveSlots() {
+    const container = document.getElementById('save-slots-container'); const worlds = getWorldsList();
+    if (!worlds || worlds.length === 0) { container.innerHTML = `<div class="save-slot"><div class="save-title" style="color:#666; text-align:center;">Збережені місії відсутні</div></div>`; return; }
+    
+    let html = '';
+    worlds.forEach(w => {
+        try {
+            const raw = localStorage.getItem(w.id); if (!raw) return; const data = JSON.parse(raw); if (!data || !data.playerStats) return;
+            let c = data.difficulty === 'easy' ? '#00ff66' : data.difficulty === 'hard' ? '#ff3333' : '#ffcc00';
+            html += `
+                <div class="save-slot active">
+                    <div class="save-header-row">
+                        <div class="save-title">🪐 СВІТ №${data.number} (${data.pilotName})</div>
+                        <div class="save-actions">
+                            <button class="action-icon-btn" onclick="renameWorld('${w.id}')" title="Редагувати назву світу">✏️</button>
+                            <button class="action-icon-btn" onclick="deleteWorld('${w.id}')" title="Видалити світ">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="save-info">
+                        • Складність: <span style="color:${c}">${data.difficulty.toUpperCase()}</span><br>
+                        • Етап: ${data.gameLevel}/15 | Кредити: ${data.playerStats.credits}<br>
+                        • Час у грі: ${formatTime(data.timeElapsed)} | Руда: ${data.playerStats.iron}
+                    </div>
+                    <button class="btn-minecraft" style="min-width:100%; margin-top:8px; font-size:14px; padding:5px;" onclick="loadSaveWorld('${w.id}')">УВІЙТИ У СВІТ</button>
+                </div>`;
+        } catch(e) { console.error(e); }
+    });
+    container.innerHTML = html === '' ? `<div class="save-slot"><div class="save-title" style="color:#666; text-align:center;">Збережені місії відсутні</div></div>` : html;
+}
+
+function renameWorld(id) {
+    try {
+        const raw = localStorage.getItem(id); if(!raw) return; const data = JSON.parse(raw);
+        let newName = prompt("Введіть нове ім'я для пілота / назви світу:", data.pilotName); if (newName === null) return;
+        newName = newName.trim(); if (newName === "") { alert("Ім'я не може бути порожнім!"); return; }
+        
+        data.pilotName = newName; localStorage.setItem(id, JSON.stringify(data));
+        let worlds = getWorldsList(); let idx = worlds.findIndex(w => w.id === id);
+        if (idx > -1) { worlds[idx].pilotName = newName; localStorage.setItem('mars_worlds_index', JSON.stringify(worlds)); }
+        renderSaveSlots();
+    } catch(e) { alert("Не вдалося перейменувати світ."); }
+}
+
+function deleteWorld(id) { 
+    if(confirm("Ви дійсно хочете видалити цей світ без можливості відновлення?")) {
+        localStorage.removeItem(id); localStorage.setItem('mars_worlds_index', JSON.stringify(getWorldsList().filter(w => w.id !== id))); renderSaveSlots(); 
+    }
+}
+
+function loadSaveWorld(id) { 
+    try {
+        const raw = localStorage.getItem(id); if(!raw) return; const data = JSON.parse(raw); resetGameState(); 
+        game.currentLoadedWorldId = data.id; game.pilotName = data.pilotName; game.gameLevel = data.gameLevel; game.levelKills = data.levelKills; game.timeElapsed = data.timeElapsed || 0; game.difficulty = data.difficulty || 'normal'; game.player = { ...game.player, ...data.playerStats }; game.isMultiplayer = false; game.isHost = true; 
+        
+        toggleSavesWindow(false); document.getElementById('main-menu').style.display = 'none'; game.isMenuOpen = false; game.isPaused = false; game.lastFpsUpdate = performance.now(); 
+        spawnWorld(); updateHUDValues(); 
+    } catch(e) { alert("Не вдалося завантажити цей світ. Дані пошкоджено."); }
+}
+
+function exitToMenu() { removeMyHostStatus(); document.getElementById('pause-overlay').style.display = 'none'; document.getElementById('shop-window').style.display = 'none'; document.getElementById('victory-overlay').style.display = 'none'; document.getElementById('debug-overlay').style.display = 'none'; toggleMapWindow(false); toggleSavesWindow(false); closeMultiplayerMenu(); closeGameChat(); game.showDebug = false; document.getElementById('main-menu').style.display = 'flex'; game.isMenuOpen = true; game.isPaused = true; }
+
+// ВІКНО НАВІГАЦІЙНОЇ КАРТИ
+function toggleMapWindow(show) {
+    if(game.isPaused || game.isGameOver || game.isMenuOpen || game.isChatOpen) return;
+    const s = document.getElementById('shop-window');
+    if(s.style.display === 'block' && show) return; 
+    
+    game.isMapOpen = show;
+    document.getElementById('map-window').style.display = show ? 'block' : 'none';
+}
+
+function drawMap() {
+    if(!game.isMapOpen) return;
+    mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+    
+    mapCtx.strokeStyle = 'rgba(255, 69, 0, 0.15)';
+    mapCtx.lineWidth = 1;
+    for(let i = 40; i < mapCanvas.width; i += 40) {
+        mapCtx.beginPath(); mapCtx.moveTo(i, 0); mapCtx.lineTo(i, mapCanvas.height); mapCtx.stroke();
+        mapCtx.beginPath(); mapCtx.moveTo(0, i); mapCtx.lineTo(mapCanvas.width, i); mapCtx.stroke();
+    }
+    
+    const worldToMap = (val) => {
+        const halfBounds = game.worldBounds / 2;
+        return ((val + halfBounds) / game.worldBounds) * mapCanvas.width;
+    };
+    
+    const shopX = worldToMap(game.shopBase.x);
+    const shopY = worldToMap(game.shopBase.y);
+    mapCtx.fillStyle = '#00ffff';
+    mapCtx.beginPath(); mapCtx.arc(shopX, shopY, 6, 0, Math.PI*2); mapCtx.fill();
+    mapCtx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+    mapCtx.lineWidth = 2; mapCtx.beginPath(); mapCtx.arc(shopX, shopY, 12, 0, Math.PI*2); mapCtx.stroke();
+    
+    game.entities.forEach(e => {
+        if(e.type === 'enemy' || e.type === 'boss') {
+            const ex = worldToMap(e.x);
+            const ey = worldToMap(e.y);
+            mapCtx.fillStyle = e.type === 'boss' ? '#ff0000' : '#ff3333';
+            mapCtx.beginPath();
+            mapCtx.arc(ex, ey, e.type === 'boss' ? 7 : 3, 0, Math.PI*2);
+            mapCtx.fill();
+        }
+    });
+    
+    const pX = worldToMap(game.player.x);
+    const pY = worldToMap(game.player.y);
+    mapCtx.fillStyle = '#00ff66';
+    mapCtx.beginPath(); mapCtx.arc(pX, pY, 5, 0, Math.PI*2); mapCtx.fill();
+    mapCtx.strokeStyle = '#00ff66';
+    mapCtx.lineWidth = 1; mapCtx.beginPath(); mapCtx.arc(pX, pY, 9, 0, Math.PI*2); mapCtx.stroke();
+}
+
+// ГЕНЕРАЦІЯ ТА ЦИКЛИ ГРИ
+function spawnWorld() {
+    for(let i=0; i<120; i++) game.entities.push({ type: 'iron', x: randC(), y: randC(), hp: 30, size: 15 });
+    for(let i=0; i<60; i++) game.entities.push({ type: 'crystal', x: randC(), y: randC(), hp: 20, size: 12 });
+    if (game.gameLevel === 15) spawnBoss(); else { let ec = 4 + game.gameLevel * 2; for(let i=0; i<ec; i++) spawnEnemy(); }
+}
+function randC() { return (Math.random() - 0.5) * game.worldBounds; }
+
+function spawnEnemy() { if (game.gameLevel === 15) return; let a = Math.random()*Math.PI*2; let d = 600 + Math.random()*400; let hp = game.difficulty === 'easy' ? 20 + game.gameLevel*2 : game.difficulty === 'hard' ? 60 + game.gameLevel*10 : 40 + game.gameLevel*5; game.entities.push({ type: 'enemy', x: game.player.x + Math.cos(a)*d, y: game.player.y + Math.sin(a)*d, hp, maxHp: hp, speed: 1.5 + Math.random()*0.8 + (game.gameLevel*0.1), size: 16 }); }
+function spawnBoss() { let hp = game.difficulty === 'easy' ? 50000 : game.difficulty === 'hard' ? 125000 : 75000; game.entities.push({ type: 'boss', x: game.player.x + 300, y: game.player.y + 300, hp, maxHp: hp, speed: 1.4, size: 60 }); game.bossSpawned = true; }
+
+window.addEventListener('keydown', e => {
+    if (game.isShutdown) return;
+    if (game.isGameOver || game.isMenuOpen) return;
+    if (game.isChatOpen) { if(e.key === 'Escape') closeGameChat(); return; }
+    if (e.key.toLowerCase() === 't' || e.key.toLowerCase() === 'е') { e.preventDefault(); openGameChat(); return; }
+    if (e.key === 'F3') { e.preventDefault(); game.showDebug = !game.showDebug; document.getElementById('debug-overlay').style.display = game.showDebug ? 'block' : 'none'; return; }
+    if (e.key === 'Escape') { if(game.isMapOpen) { toggleMapWindow(false); } else { togglePause(); } return; }
+    
+    if (e.key.toLowerCase() === 'm' || e.key.toLowerCase() === 'ь') {
+        e.preventDefault();
+        toggleMapWindow(!game.isMapOpen);
+        return;
+    }
+    
+    if (game.isPaused) return;
+    game.keys[e.key.toLowerCase()] = true;
+    if(e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'з') toggleShop();
+});
+
+window.addEventListener('keyup', e => { if (!game.isChatOpen && !game.isMenuOpen) game.keys[e.key.toLowerCase()] = false; });
+window.addEventListener('mousemove', e => { if (!game.isPaused && !game.isGameOver && !game.isMenuOpen && !game.isChatOpen) { game.mouse.x = e.clientX; game.mouse.y = e.clientY; } });
+window.addEventListener('mousedown', () => { if (!game.isGameOver && !game.isMenuOpen && !game.isChatOpen) game.mouse.isDown = true; });
+window.addEventListener('mouseup', () => { game.mouse.isDown = false; });
+
+function getActiveMouseAngles() {
+    const pX = canvas.width / 2; const pY = canvas.height / 2;
+    return Math.atan2(game.mouse.y - pY, game.mouse.x - pX);
+}
+
+function shoot() {
+    if(game.isPaused || game.isGameOver || game.player.shootCooldown > 0 || document.getElementById('shop-window').style.display === 'block') return;
+    const a = getActiveMouseAngles();
+    game.projectiles.push({ x: game.player.x, y: game.player.y, vx: Math.cos(a) * 14, vy: Math.sin(a) * 14, damage: game.player.damage, life: 50 });
+    game.player.shootCooldown = game.player.shootMaxCooldown;
+}
+
+function togglePause() { if(game.isGameOver || game.isMenuOpen || game.isChatOpen) return; if(game.isMapOpen) game.isMapOpen = false; game.isPaused = !game.isPaused; document.getElementById('pause-overlay').style.display = game.isPaused ? 'flex' : 'none'; document.getElementById('map-window').style.display = 'none'; if(!game.isPaused) { game.keys = {}; game.mouse.isDown = false; } }
+function toggleShop() { if (game.isPaused || game.isGameOver || game.isMenuOpen || game.isMapOpen) return; const s = document.getElementById('shop-window'); s.style.display = s.style.display === 'block' ? 'none' : 'block'; game.mouse.isDown = false; }
+
+function sellResource(type, rate) { let amt = game.player[type]; if(amt > 0) { game.player.credits += amt * rate; game.player[type] = 0; } }
+function buyUpgrade(type, cost) { if(game.player.credits >= cost) { game.player.credits -= cost; if(type === 'repair') game.player.hp = Math.min(game.player.maxHp, game.player.hp + 30); else if(type === 'speed') game.player.speed += 1; else if(type === 'armor') { game.player.maxHp += 50; game.player.hp += 50; } else if(type === 'damage') game.player.damage += 5; } }
+function particles(x, y, c) { for(let i=0; i<8; i++) game.particles.push({ x, y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, life: 1, color: c }); }
+
+function checkGameLevelUp() {
+    if(game.levelKills >= game.killsTarget && game.gameLevel < 15) {
+        game.gameLevel++; game.levelKills = 0; updateHUDValues();
+        if(game.gameLevel === 15) {
+            let alertEl = document.getElementById('level-alert'); alertEl.innerText = "РІВЕНЬ 15: НАЙВАЩИЙ РІВЕНЬ"; alertEl.className = 'final-level'; alertEl.style.display = 'block';
+            game.entities = game.entities.filter(e => e.type !== 'enemy'); spawnBoss();
+        } else {
+            let alertEl = document.getElementById('level-alert'); alertEl.innerText = `РІВЕНЬ ${game.gameLevel} ДАЛІ БУДЕ ВАЖЧЕ`; alertEl.style.display = 'block';
+            setTimeout(() => { alertEl.style.display = 'none'; }, 3000); for(let i=0; i < 3 + game.gameLevel; i++) spawnEnemy();
+        }
+    }
+}
+
+function update() {
+    if (game.isShutdown) return;
+    game.fpsCounter++; const now = performance.now();
+    if (now - game.lastFpsUpdate >= 1000) { game.currentFps = Math.round((game.fpsCounter * 1000) / (now - game.lastFpsUpdate)); game.fpsCounter = 0; game.lastFpsUpdate = now; if(game.showDebug) document.getElementById('debug-fps').innerText = `FPS: ${game.currentFps}`; }
+    
+    if (game.isMapOpen) { drawMap(); }
+    if (game.isPaused || game.isGameOver || game.isMenuOpen) return;
+
+    if(game.player.shootCooldown > 0) game.player.shootCooldown--; if(game.mouse.isDown) shoot();
+
+    let dx = 0, dy = 0;
+    if (game.keys['w'] || game.keys['ц']) dy -= 1; if (game.keys['s'] || game.keys['і']) dy += 1;
+    if (game.keys['a'] || game.keys['ф']) dx -= 1; if (game.keys['d'] || game.keys['в']) dx += 1;
+    if (dx !== 0 || dy !== 0) { let len = Math.sqrt(dx*dx + dy*dy); game.player.x += (dx/len) * game.player.speed; game.player.y += (dy/len) * game.player.speed; }
+
+    game.camera.x = game.player.x - canvas.width / 2; game.camera.y = game.player.y - canvas.height / 2;
+    if (game.showDebug) { document.getElementById('debug-coords').innerText = `XYZ: ${game.player.x.toFixed(3)} / ${game.player.y.toFixed(3)}`; document.getElementById('debug-entities').innerText = `E: ${game.entities.length}`; }
+
+    for(let i = game.projectiles.length - 1; i >= 0; i--) {
+        let p = game.projectiles[i]; p.x += p.vx; p.y += p.vy; p.life--; let hit = false;
+        for(let j = game.entities.length - 1; j >= 0; j--) {
+            let e = game.entities[j];
+            if(Math.hypot(p.x - e.x, p.y - e.y) < e.size + 5) {
+                e.hp -= p.damage; particles(e.x, e.y, e.type === 'iron'?'#8a5a44':e.type === 'crystal'?'#00f2ff':'#ff3333'); hit = true;
+                if(e.hp <= 0) {
+                    if(e.type === 'iron') { game.player.iron += 10; gainXP(15); }
+                    if(e.type === 'crystal') { game.player.crystal += 5; gainXP(25); }
+                    if(e.type === 'enemy') { game.player.credits += game.difficulty === 'easy' ? 10 : game.difficulty === 'hard' ? 40 : 15; gainXP(40); game.levelKills++; updateHUDValues(); checkGameLevelUp(); }
+                    if(e.type === 'boss') { game.isGameOver = true; document.getElementById('victory-overlay').style.display = 'flex'; removeMyHostStatus(); }
+                    game.entities.splice(j, 1);
+                }
+                break;
+            }
+        }
+        if(hit || p.life <= 0) game.projectiles.splice(i, 1);
+    }
+
+    let ec = 0;
+    game.entities.forEach(e => {
+        if(e.type === 'enemy' || e.type === 'boss') {
+            if(e.type === 'enemy') ec++; let dist = Math.hypot(game.player.x - e.x, game.player.y - e.y);
+            e.x += ((game.player.x - e.x) / dist) * e.speed; e.y += ((game.player.y - e.y) / dist) * e.speed;
+            if(dist < game.player.size + e.size) {
+                if(!game.isGodMode) game.player.hp -= e.type === 'boss' ? 2 : 0.15;
+                if(game.player.hp <= 0) { alert("Марсохід знищено!"); exitToMenu(); }
+            }
+        }
+    });
+
+    if (game.gameLevel < 15 && ec < 15 && Math.random() < 0.005) spawnEnemy();
+    game.particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.03; if(p.life<=0) game.particles.splice(i,1); });
+
+    document.getElementById('hp-txt').innerText = `${Math.max(0, Math.floor(game.player.hp))} / ${game.player.maxHp}`;
+    document.getElementById('hp-bar').style.width = (Math.max(0, game.player.hp) / game.player.maxHp * 100) + '%';
+    document.getElementById('dmg-txt').innerText = game.player.damage; document.getElementById('lvl-txt').innerText = game.player.lvl;
+    document.getElementById('xp-bar').style.width = (game.player.xp / game.player.nextLvlXp * 100) + '%';
+    document.getElementById('iron-txt').innerText = game.player.iron; document.getElementById('crystal-txt').innerText = game.player.crystal;
+    document.getElementById('credits-txt').innerText = game.player.credits; 
+}
+
+function gainXP(amt) { game.player.xp += amt; if(game.player.xp >= game.player.nextLvlXp) { game.player.lvl++; game.player.xp = 0; game.player.maxHp += 15; game.player.hp = game.player.maxHp; } }
+
+function draw() {
+    if (game.isShutdown) return; ctx.fillStyle = '#1e0f0a'; ctx.fillRect(0, 0, canvas.width, canvas.height); if (game.isMenuOpen) return;
+    const baseSX = game.shopBase.x - game.camera.x; const baseSY = game.shopBase.y - game.camera.y;
+    ctx.fillStyle = 'rgba(0, 255, 200, 0.15)'; ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(baseSX, baseSY, game.shopBase.size, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#00ffcc'; ctx.font = 'bold 12px Courier New'; ctx.fillText("🚨 МАГАЗИН [P]", baseSX - 45, baseSY + 5);
+
+    game.entities.forEach(e => {
+        const sx = e.x - game.camera.x; const sy = e.y - game.camera.y;
+        if (e.type === 'iron') { ctx.fillStyle = '#7a4a35'; ctx.beginPath(); ctx.arc(sx, sy, e.size, 0, Math.PI*2); ctx.fill(); } 
+        else if (e.type === 'crystal') { ctx.fillStyle = '#00f2ff'; ctx.beginPath(); ctx.moveTo(sx, sy - e.size); ctx.lineTo(sx + e.size, sy); ctx.lineTo(sx, sy + e.size); ctx.lineTo(sx - e.size, sy); ctx.closePath(); ctx.fill(); } 
+        else if (e.type === 'enemy' || e.type === 'boss') {
+            if (e.type === 'enemy') {
+                ctx.fillStyle = '#4a154b'; ctx.beginPath(); ctx.arc(sx, sy, e.size, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = '#00ff66'; ctx.fillRect(sx-4, sy-3, 3, 3); ctx.fillRect(sx+2, sy-3, 3, 3); 
+            } else if (e.type === 'boss') {
+                ctx.fillStyle = '#110000'; ctx.strokeStyle = '#ff0033'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(sx, sy, e.size, 0, Math.PI*2); ctx.fill(); ctx.stroke(); 
+            }
+            const barW = e.size * 2; const barH = 5; const barY = sy - e.size - 10;
+            ctx.fillStyle = '#331100'; ctx.fillRect(sx - barW/2, barY, barW, barH);
+            ctx.fillStyle = e.type === 'boss' ? '#ff0055' : '#ff3333'; ctx.fillRect(sx - barW/2, barY, barW * (e.hp / e.maxHp), barH);
+        }
+    });
+
+    ctx.strokeStyle = '#ff33aa'; ctx.lineWidth = 4; game.projectiles.forEach(p => { ctx.beginPath(); ctx.moveTo(p.x - game.camera.x, p.y - game.camera.y); ctx.lineTo(p.x - game.camera.x - p.vx*1.5, p.y - game.camera.y - p.vy*1.5); ctx.stroke(); });
+    game.particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x - game.camera.x, p.y - game.camera.y, 4, 4); }); ctx.globalAlpha = 1;
+
+    const pX = canvas.width / 2; const pY = canvas.height / 2;
+    ctx.save(); ctx.translate(pX, pY); ctx.rotate(getActiveMouseAngles());
+    ctx.fillStyle = game.isHost ? '#e65c00' : '#b55aff'; ctx.fillRect(-18, -14, 36, 28); ctx.fillStyle = '#222'; ctx.fillRect(-16, -18, 10, 4); ctx.fillRect(6, -18, 10, 4); ctx.fillRect(-16, 14, 10, 4); ctx.fillRect(6, 14, 10, 4); ctx.fillStyle = '#333'; ctx.fillRect(4, -4, 22, 8); ctx.restore();
+
+    ctx.fillStyle = '#00ffcc'; ctx.font = 'bold 13px Courier New'; ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+    ctx.fillText(`${game.pilotName.toUpperCase()} [LVL ${game.player.lvl}]`, pX, pY - game.player.size - 12); ctx.shadowBlur = 0;
+
+    const grad = ctx.createRadialGradient(pX, pY, 40, pX, pY, 500); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(10,3,0,0.8)'); ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>
